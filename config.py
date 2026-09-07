@@ -3,9 +3,6 @@ config.py
 =========
 Central configuration for the MDD EEG analysis pipeline.
 
-Edit BASE_DIR to point at your local 'MDD EEG' data folder.
-Everything else (channel names, filter settings, trigger codes, PHQ9 scores)
-lives here so the rest of the codebase never hardcodes these values.
 """
 
 
@@ -21,9 +18,9 @@ import os
 from pathlib import Path
 
 if os.path.exists("/content/drive"):
-    BASE_DIR = Path("/content/drive/MyDrive/mdd_eeg/MDD EEG")
+    BASE_DIR = Path(
 else:
-    BASE_DIR = Path("/Users/mustachelover/Downloads/MDD Zipped files/Datasets and Matlab codes /MDD EEG")
+    BASE_DIR = Path(
 # Where intermediate/derived outputs get cached (created automatically)
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 FIGURES_DIR = Path(__file__).resolve().parent.parent / "figures"
