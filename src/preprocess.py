@@ -20,59 +20,6 @@ import config
 mne.set_log_level("WARNING")
 
 
-def preprocess(raw: mne.io.RawArray, subject_id: str):
-    """
-    Run the full Objective 1 preprocessing pipeline on a single subject.
-
-    Parameters
-    ----------
-    raw : mne.io.RawArray
-        Loaded raw EEG/ECG data (not modified in place — a copy is returned)
-    subject_id : str
-        Used only for logging
-
-    Returns
-    -------
-    raw_clean : mne.io.RawArray
-    bad_channels : list of str
-    """
-    raw = raw.copy()
-
-    # 1. Bandpass filter — zero-phase FIR (firwin), removes drift + high-freq noise
-    raw.filter(
-        l_freq=config.BANDPASS_LOW,
-        h_freq=config.BANDPASS_HIGH,
-        picks="eeg",
-        fir_design="firwin",
-        verbose=False,
-    )
-
-    # 2. Notch filter — zero-phase FIR (firwin), removes mains interference
-    # (hardware line filter was OFF during recording, confirmed via .info files)
-    raw.notch_filter(freqs=config.NOTCH_FREQ, picks="eeg", verbose=False)
-
-    # 3. Bad channel detection (variance z-score) + interpolation
-    eeg_data = raw.get_data(picks="eeg")
-    ch_var = np.var(eeg_data, axis=1)
-    z_scores = (ch_var - ch_var.mean()) / ch_var.std()
-    bad_channels = [
-        config.EEG_CHANNELS[i]
-        for i, z in enumerate(z_scores)
-        if abs(z) > config.BAD_CH_ZSCORE
-    ]
-
-    if bad_channels:
-        print(f"    Bad channels: {bad_channels}")
-        raw.info["bads"] = bad_channels
-        raw.interpolate_bads(reset_bads=True, verbose=False)
-    else:
-        print("    No bad channels")
-
-    # 4. Average reference (applied after interpolation)
-    raw.set_eeg_reference("average", projection=False, verbose=False)
-
-    return raw, bad_channels
-
 
 def preprocess_all(loaded: dict) -> tuple[dict, dict]:
     """
